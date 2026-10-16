@@ -300,6 +300,6 @@ game.import("extension", function(lib, game, ui, get, ai, _status) {
     author: "Hadeanyolo",
     diskURL: "",
     forumURL: "",
-    version: "1.0.1",
+    version: "1.0.2",
 },files:{"character":["蔡琰.jpg","张宁.jpg","玄德.jpg","黄盖.jpg"],"card":[],"skill":[],"audio":[]}} 
 });
