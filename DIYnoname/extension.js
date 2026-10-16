@@ -1,6 +1,4 @@
-import { lib, game, ui, get, ai, _status } from "noname";
-export const type = "extension";
-export default function(){
+game.import("extension", function(lib, game, ui, get, ai, _status) {
 	return {name:"DIYnoname",editable:true,connect:false,arenaReady:function(){
     
 },content:function(config,pack){
@@ -282,6 +280,6 @@ export default function(){
     author: "Hadeanyolo",
     diskURL: "",
     forumURL: "",
-    version: "1.0.0",
+    version: "1.0.1",
 },files:{"character":["蔡琰.jpg","张宁.jpg","玄德.jpg","黄盖.jpg"],"card":[],"skill":[],"audio":[]}} 
-};
+});
