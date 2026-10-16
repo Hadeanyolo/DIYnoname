@@ -71,6 +71,26 @@ game.import("extension", function(lib, game, ui, get, ai, _status) {
     skill: {
         skill: {
             "地法": {
+                usable: 1,
+                group: "地法_reset",
+                subSkill: {
+                    reset: {
+                        trigger: { source: "damageSource" },
+                        forced: true,
+                        silent: true,
+                        popup: false,
+                        charlotte: true,
+                        filter(event, player) {
+                            return event.hasNature("thunder") && event.num > 0;
+                        },
+                        content(event, trigger, player) {
+                            const stat = player.getStat();
+                            if (stat.triggerSkill) {
+                                delete stat.triggerSkill["地法"];
+                            }
+                        },
+                    },
+                },
                 trigger: {
                     player: "gainAfter",
                 },
@@ -267,7 +287,7 @@ game.import("extension", function(lib, game, ui, get, ai, _status) {
         },
         translate: {
             "地法": "地法",
-            "地法_info": "当你于回合内得到红色牌后，你可以弃置其中一张。然后你选择一个锦囊牌的牌名，并从牌堆/弃牌堆中获得一张此牌名的牌。",
+            "地法_info": "每回合限一次。当你于回合内得到红色牌后，你可以弃置其中一张。然后你选择一个锦囊牌的牌名，并从牌堆/弃牌堆中获得一张此牌名的牌。当你造成雷电伤害后，此技能视为未发动过。",
             "惊蛰": "惊蛰",
             "惊蛰_info": "锁定技，你造成的所有伤害均视为雷电伤害",
             "显道": "显道",
