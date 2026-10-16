@@ -1,7 +1,7 @@
 import { lib, game, ui, get, ai, _status } from "noname";
 export const type = "extension";
 export default function(){
-	return {name:"1.11.6DIY",editable:true,connect:false,arenaReady:function(){
+	return {name:"DIYnoname",editable:true,connect:false,arenaReady:function(){
     
 },content:function(config,pack){
     
@@ -20,8 +20,7 @@ export default function(){
                 hujia: 0,
                 skills: ["dcshuangjia","dcbeifen","beige","boss_hujia","tinqin","boss_huixin","chenjie"],
                 isAiForbidden: true,
-                img: "extension/0.116DIY/蔡琰.jpg",
-                dieAudios: ["ext:1.11.6DIY/audio/die/蔡琰.mp3"],
+                img: "extension/DIYnoname/蔡琰.jpg",
             },
             "玄德": {
                 sex: "male",
@@ -32,8 +31,7 @@ export default function(){
                 skills: ["dcliexiang","dcrengou","dcrende","xiaoxiong","boss_zhangwu"],
                 isZhugong: true,
                 isAiForbidden: true,
-                img: "extension/1.11.6DIY/玄德.jpg",
-                dieAudios: ["ext:1.11.6DIY/audio/die/玄德.mp3"],
+                img: "extension/DIYnoname/玄德.jpg",
             },
             "黄盖": {
                 sex: "male",
@@ -43,8 +41,7 @@ export default function(){
                 hujia: 0,
                 skills: ["dcsblieji","dcsbquzhou","reyingzi","sbkurou","sbzhaxiang","zhaxiang"],
                 isAiForbidden: true,
-                img: "extension/1.11.6DIY/黄盖.jpg",
-                dieAudios: ["ext:1.11.6DIY/audio/die/黄盖.mp3"],
+                img: "extension/DIYnoname/黄盖.jpg",
             },
             "张宁": {
                 sex: "male",
@@ -55,14 +52,12 @@ export default function(){
                 skills: ["tianze","地法","惊蛰","显道","引霆"],
                 isZhugong: true,
                 isAiForbidden: true,
-                img: "extension/1.11.6DIY/张宁.jpg",
-                dieAudios: ["ext:1.11.6DIY/audio/die/张宁.mp3"],
+                img: "extension/DIYnoname/张宁.jpg",
             },
         },
         translate: {
             "蔡琰": "蔡琰",
-            "0.116DIY": "0.116DIY",
-            "1.11.6DIY": "1.11.6DIY",
+            "DIYnoname": "DIYnoname",
             "玄德": "玄德",
             "黄盖": "黄盖",
             "张宁": "张宁",
@@ -78,7 +73,6 @@ export default function(){
     skill: {
         skill: {
             "地法": {
-                audio: "ext:1.11.6DIY:2",
                 trigger: {
                     player: "gainAfter",
                 },
@@ -169,7 +163,6 @@ export default function(){
                 "_priority": 0,
             },
             "惊蛰": {
-                audio: "ext:1.11.6DIY:2",
                 locked: true,
                 forced: true,
                 trigger: {
@@ -259,7 +252,6 @@ export default function(){
                 "_priority": 0,
             },
             "引霆": {
-                audio: "ext:1.11.6DIY:2",
                 locked: true,
                 forced: true,
                 trigger: {
@@ -286,10 +278,10 @@ export default function(){
             "引霆_info": "锁定技，当一名角色受到雷电伤害后，你摸一张牌。",
         },
     },
-    intro: "",
-    author: "无名玩家",
+    intro: "自用DIY武将扩展",
+    author: "Hadeanyolo",
     diskURL: "",
     forumURL: "",
-    version: "1.0",
+    version: "1.0.0",
 },files:{"character":["蔡琰.jpg","张宁.jpg","玄德.jpg","黄盖.jpg"],"card":[],"skill":[],"audio":[]}} 
 };
