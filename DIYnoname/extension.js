@@ -1,13 +1,87 @@
 game.import("extension", function(lib, game, ui, get, ai, _status) {
+// 单机身份局：玩家选双将，其他角色只选单将。
+// 仅影响本次选将流程，不保存或修改军争双将选项。
+function installSoloDoubleCharacter() {
+    if (get.mode() !== "identity" || _status.connectMode || game.online || game._diySoloDoubleInstalled) return;
+    if (typeof game.chooseCharacter !== "function") return;
+    game._diySoloDoubleInstalled = true;
+    const originalChoose = game.chooseCharacter;
+    game.chooseCharacter = function() {
+        if (!lib.config.extension_DIYnoname_soloDouble || _status.mode === "purple") {
+            return originalChoose.apply(this, arguments);
+        }
+        const createEvent = game.createEvent;
+        let choiceEvent;
+        game.createEvent = function(name) {
+            const next = createEvent.apply(this, arguments);
+            if (name === "chooseCharacter" && !choiceEvent) {
+                choiceEvent = next;
+                const setContent = next.setContent;
+                next.setContent = function(content) {
+                    if (!Array.isArray(content) || content.length < 3) {
+                        return setContent.apply(this, arguments);
+                    }
+                    const settings = lib.config.mode_config && lib.config.mode_config.identity;
+                    if (!settings) return setContent.apply(this, arguments);
+                    const original = settings.double_character;
+                    const restore = () => { settings.double_character = original; };
+                    const ai = next.ai;
+                    if (typeof ai === "function") {
+                        next.ai = function() {
+                            const previous = settings.double_character;
+                            settings.double_character = false;
+                            try {
+                                return ai.apply(this, arguments);
+                            } finally {
+                                settings.double_character = previous;
+                            }
+                        };
+                    }
+                    const first = content[0], last = content[content.length - 1];
+                    content[0] = async function() {
+                        settings.double_character = true;
+                        try {
+                            return await first.apply(this, arguments);
+                        } catch (error) {
+                            restore();
+                            throw error;
+                        }
+                    };
+                    content[content.length - 1] = async function() {
+                        try {
+                            return await last.apply(this, arguments);
+                        } finally {
+                            restore();
+                        }
+                    };
+                    return setContent.call(this, content);
+                };
+            }
+            return next;
+        };
+        try {
+            return originalChoose.apply(this, arguments);
+        } finally {
+            game.createEvent = createEvent;
+        }
+    };
+}
+
 	return {name:"DIYnoname",editable:true,connect:false,arenaReady:function(){
-    
+    installSoloDoubleCharacter();
 },content:function(config,pack){
     
 },prepare:function(){
     
 },precontent:function(config){
-    
-},help:{},config:{},package:{
+    installSoloDoubleCharacter();
+},help:{},config:{
+    soloDouble: {
+        name: "单机军争仅自己双将",
+        intro: "单机身份模式下，你选择两名武将，其他角色仍为单将。联机模式不生效。",
+        init: false,
+    },
+},package:{
     character: {
         character: {
             "蔡琰": {
@@ -300,6 +374,6 @@ game.import("extension", function(lib, game, ui, get, ai, _status) {
     author: "Hadeanyolo",
     diskURL: "",
     forumURL: "",
-    version: "1.0.2",
+    version: "1.0.3",
 },files:{"character":["蔡琰.jpg","张宁.jpg","玄德.jpg","黄盖.jpg"],"card":[],"skill":[],"audio":[]}} 
 });
