@@ -115,6 +115,16 @@ function installSoloDoubleCharacter() {
                 isAiForbidden: true,
                 img: "extension/DIYnoname/黄盖.jpg",
             },
+            "孙寒华": {
+                sex: "female",
+                group: "shen",
+                hp: 6,
+                maxHp: 6,
+                hujia: 0,
+                skills: [],
+                isAiForbidden: true,
+                img: "extension/DIYnoname/孙寒华.jpg",
+            },
             "张宁": {
                 sex: "male",
                 group: "shen",
@@ -127,11 +137,15 @@ function installSoloDoubleCharacter() {
                 img: "extension/DIYnoname/张宁.jpg",
             },
         },
+        characterIntro: {
+            "孙寒华": "孙寒华，吴地女冠，传为孙氏宗室之女。自幼慕道，远离纷争，潜心修习道法。其人清静自持，心怀济世之念，后世留下诸多传说。",
+        },
         translate: {
             "蔡琰": "蔡琰",
             "DIYnoname": "DIYnoname",
             "玄德": "玄德",
             "黄盖": "黄盖",
+            "孙寒华": "孙寒华",
             "张宁": "张宁",
         },
     },
@@ -375,5 +389,5 @@ function installSoloDoubleCharacter() {
     diskURL: "",
     forumURL: "",
     version: "1.0.3",
-},files:{"character":["蔡琰.jpg","张宁.jpg","玄德.jpg","黄盖.jpg"],"card":[],"skill":[],"audio":[]}} 
+},files:{"character":["蔡琰.jpg","张宁.jpg","玄德.jpg","黄盖.jpg","孙寒华.jpg"],"card":[],"skill":[],"audio":[]}} 
 });
