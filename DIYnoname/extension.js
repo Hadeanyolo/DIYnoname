@@ -121,7 +121,7 @@ function installSoloDoubleCharacter() {
                 hp: 6,
                 maxHp: 6,
                 hujia: 0,
-                skills: ["diy_chongxu","diy_miaojian","diy_lianhua"],
+                skills: ["diy_chongxu","diy_miaojian","diy_lianhua","dchuiling","diy_dcchongxu"],
                 isAiForbidden: true,
                 img: "extension/DIYnoname/孙寒华.jpg",
             },
@@ -160,6 +160,110 @@ function installSoloDoubleCharacter() {
         skill: {
 
             // 孙寒华：保留手杀原配音，改变冲虚得分与妙剑、莲华的升级方式。
+
+            // 新杀孙寒华：汇灵原样使用官方 dchuiling；青荒原样使用 dcqinghuang。
+            "diy_dcchongxu": {
+                audio: "dcchongxu",
+                enable: "phaseUse",
+                usable: 1,
+                derivation: ["diy_dctaji", "dcqinghuang"],
+                filter(event, player) {
+                    return player.countMark("dchuiling") >= 4;
+                },
+                prompt(event, player) {
+                    const num = player.countMark("dchuiling");
+                    return player.hasSkill("diy_dctaji") && player.hasSkill("dcqinghuang")
+                        ? "移去所有“灵”并摸" + num + "张牌（保留【汇灵】）"
+                        : "移去所有“灵”，增加" + num + "点体力上限，然后获得【踏寂】和【青荒】（保留【汇灵】）";
+                },
+                async content(event, trigger, player) {
+                    const num = player.countMark("dchuiling");
+                    if (num < 4) return;
+                    const hasBoth = player.hasSkill("diy_dctaji") && player.hasSkill("dcqinghuang");
+                    player.removeMark("dchuiling", num);
+                    if (hasBoth) {
+                        await player.draw(num);
+                    } else {
+                        await player.gainMaxHp(num);
+                        const missing = [];
+                        if (!player.hasSkill("diy_dctaji")) missing.push("diy_dctaji");
+                        if (!player.hasSkill("dcqinghuang")) missing.push("dcqinghuang");
+                        if (missing.length) await player.addSkills(missing);
+                    }
+                },
+                ai: {
+                    combo: "dchuiling",
+                    order: 10,
+                    result: { player: 1 },
+                },
+            },
+            "diy_dctaji": {
+                audio: "dctaji",
+                trigger: {
+                    player: "loseEnd",
+                    global: ["equipEnd", "addJudgeEnd", "gainEnd", "loseAsyncEnd", "addToExpansionEnd"],
+                },
+                forced: true,
+                locked: false,
+                filter(event, player) {
+                    const evt = event.getl(player);
+                    return !!(evt && evt.hs && evt.hs.length);
+                },
+                async content(event, trigger, player) {
+                    const evt = trigger.getParent();
+                    const effects = [
+                        ["useCard", async (event, trigger, player) => {
+                            const targets = game.filterPlayer(current =>
+                                current !== player && current.countDiscardableCards(player, "he")
+                            );
+                            if (!targets.length) return;
+                            // 与原版唯一的行为差异：不再强制选择目标。
+                            const result = await player.chooseTarget(
+                                "踏寂：你可以弃置其他角色一张牌", 
+                                (card, player, target) => get.event().targets.includes(target)
+                            ).set("targets", targets)
+                             .set("ai", target => get.effect(target, { name: "guohe_copy2" }, get.player()))
+                             .forResult();
+                            if (result?.bool && result.targets?.length) {
+                                const target = result.targets[0];
+                                player.line(target);
+                                await player.discardPlayerCard(target, "he", true);
+                            }
+                        }],
+                        ["respond", async (event, trigger, player) => {
+                            await player.draw();
+                        }],
+                        ["discard", async (event, trigger, player) => {
+                            await player.recover();
+                        }],
+                        ["other", async (event, trigger, player) => {
+                            player.addSkill("dctaji_damage");
+                            player.addMark("dctaji_damage", 1, false);
+                            game.log(player, "下一次对其他角色造成的伤害", "#g+1");
+                        }],
+                    ];
+                    let name = evt.name;
+                    if (trigger.name === "loseAsync") name = evt.type;
+                    const list = ["useCard", "respond", "discard", "other"];
+                    if (!list.includes(name)) name = "other";
+                    for (let i = 0; i < 1 + player.countMark("dcqinghuang_add"); i++) {
+                        if (!list.length) break;
+                        if (!list.includes(name)) name = list.randomRemove(1)[0];
+                        if (name === "useCard") list.remove("useCard");
+                        for (const effect of effects) {
+                            if (effect[0] === name) {
+                                list.remove(name);
+                                const next = game.createEvent("diy_dctaji_" + name);
+                                next.player = player;
+                                next.setContent(effect[1]);
+                                await next;
+                                break;
+                            }
+                        }
+                    }
+                },
+                ai: { combo: "dcqinghuang" },
+            },
             "diy_chongxu": {
                 audio: "chongxu",
                 enable: "phaseUse",
@@ -541,6 +645,10 @@ function installSoloDoubleCharacter() {
             },
         },
         translate: {
+            "diy_dcchongxu": "冲虚",
+            "diy_dcchongxu_info": "出牌阶段限一次，若你的“灵”不少于4，你可以移去所有“灵”（X为移去的“灵”数），然后若你已有【踏寂】和【青荒】，你摸X张牌；否则你增加X点体力上限并获得【踏寂】和【青荒】。你不会因此失去【汇灵】。",
+            "diy_dctaji": "踏寂",
+            "diy_dctaji_info": "当你失去手牌后，根据失去牌的原因：使用牌后，你可以弃置一名其他角色的一张牌；打出牌后，你摸一张牌；弃置牌后，你回复1点体力；其他原因，令你下次对其他角色造成的伤害+1。【青荒】的额外效果仍然生效。",
             "diy_chongxu": "冲虚",
             "diy_chongxu_info": "出牌阶段限一次，你获得5分，然后可以消耗3分升级【妙剑】或【莲华】（各最多升级两次），或消耗2分摸一张牌（可重复）。未使用的分数不保留。",
             "diy_miaojian": "妙剑",
