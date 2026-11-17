@@ -121,7 +121,7 @@ function installSoloDoubleCharacter() {
                 hp: 6,
                 maxHp: 6,
                 hujia: 0,
-                skills: [],
+                skills: ["diy_chongxu","diy_miaojian","diy_lianhua"],
                 isAiForbidden: true,
                 img: "extension/DIYnoname/孙寒华.jpg",
             },
@@ -158,6 +158,173 @@ function installSoloDoubleCharacter() {
     },
     skill: {
         skill: {
+
+            // 孙寒华：保留手杀原配音，改变冲虚得分与妙剑、莲华的升级方式。
+            "diy_chongxu": {
+                audio: "chongxu",
+                enable: "phaseUse",
+                usable: 1,
+                async content(event, trigger, player) {
+                    let score = 5;
+                    while (score >= 2) {
+                        const controls = [];
+                        const descriptions = [];
+                        if (score >= 3 && player.hasSkill("diy_miaojian") && player.countMark("diy_miaojian") < 2) {
+                            controls.push("升级妙剑");
+                            descriptions.push("消耗3分：妙剑每回合可额外使用一次");
+                        }
+                        if (score >= 3 && player.hasSkill("diy_lianhua") && player.countMark("diy_lianhua") < 2) {
+                            controls.push("升级莲华");
+                            descriptions.push("消耗3分：莲华每次额外摸两张牌");
+                        }
+                        if (score >= 2) {
+                            controls.push("摸一张牌");
+                            descriptions.push("消耗2分：摸一张牌");
+                        }
+                        controls.push("结束分配");
+                        descriptions.push("放弃剩余积分");
+                        const result = await player.chooseControl(controls)
+                            .set("prompt", "冲虚：本次剩余" + score + "分")
+                            .set("choiceList", descriptions)
+                            .set("ai", function () {
+                                const evt = get.event(), choices = evt.controls;
+                                if (choices.includes("升级莲华")) return "升级莲华";
+                                if (choices.includes("升级妙剑")) return "升级妙剑";
+                                if (choices.includes("摸一张牌")) return "摸一张牌";
+                                return "结束分配";
+                            }).forResult();
+                        if (!result || result.control === "结束分配" || !controls.includes(result.control)) break;
+                        switch (result.control) {
+                            case "升级妙剑":
+                                score -= 3;
+                                player.addMark("diy_miaojian", 1, false);
+                                game.log(player, "升级了", "#g【妙剑】", "，当前可使用", player.countMark("diy_miaojian") + 1, "次");
+                                break;
+                            case "升级莲华":
+                                score -= 3;
+                                player.addMark("diy_lianhua", 1, false);
+                                game.log(player, "升级了", "#g【莲华】", "，每次可摸", 1 + 2 * player.countMark("diy_lianhua"), "张牌");
+                                break;
+                            case "摸一张牌":
+                                score -= 2;
+                                await player.draw();
+                                break;
+                        }
+                    }
+                },
+                ai: { order: 10, result: { player: 1 } },
+            },
+            "diy_miaojian": {
+                audio: "miaojian",
+                enable: "phaseUse",
+                usable: 3,
+                mark: true,
+                marktext: "剑",
+                intro: { content(storage, player) {
+                    return "已升级" + player.countMark("diy_miaojian") + "/2次；每回合最多发动" + (1 + player.countMark("diy_miaojian")) + "次";
+                } },
+                filter(event, player) {
+                    const used = player.getStat("skill")?.diy_miaojian || 0;
+                    if (used >= 1 + player.countMark("diy_miaojian")) return false;
+                    return event.filterCard({ name: "wuzhong", isCard: true }, player, event) ||
+                        event.filterCard({ name: "sha", nature: "stab", isCard: true, storage: { diy_miaojian: true } }, player, event);
+                },
+                chooseButton: {
+                    dialog() {
+                        return ui.create.dialog("妙剑", [[
+                            ["基本", "", "sha", "stab"],
+                            ["锦囊", "", "wuzhong"],
+                        ], "vcard"]);
+                    },
+                    filter(button, player) {
+                        const evt = _status.event.getParent();
+                        const card = button.link[2] === "sha"
+                            ? { name: "sha", nature: "stab", isCard: true, storage: { diy_miaojian: true } }
+                            : { name: "wuzhong", isCard: true };
+                        return evt.filterCard(card, player, evt);
+                    },
+                    check(button) {
+                        const card = { name: button.link[2], nature: button.link[3] };
+                        const player = _status.event.player;
+                        return get.value(card, player) * get.sgn(player.getUseValue(card));
+                    },
+                    backup(links) {
+                        const isSha = links[0][2] === "sha";
+                        return {
+                            audio: "miaojian",
+                            filterCard: () => false,
+                            selectCard: -1,
+                            viewAs: isSha
+                                ? { name: "sha", nature: "stab", isCard: true, storage: { diy_miaojian: true } }
+                                : { name: "wuzhong", isCard: true },
+                            prompt: isSha ? "请选择刺【杀】的目标" : "请选择【无中生有】的目标",
+                        };
+                    },
+                    prompt(links) {
+                        return links[0][2] === "sha" ? "请选择刺【杀】的目标" : "请选择【无中生有】的目标";
+                    },
+                },
+                mod: {
+                    cardUsable(card, player) {
+                        if (card.name === "sha" && card.nature === "stab" && card.storage?.diy_miaojian) return Infinity;
+                    },
+                },
+                group: "diy_miaojian_count",
+                subSkill: {
+                    backup: { audio: "miaojian" },
+                    count: {
+                        charlotte: true,
+                        forced: true,
+                        silent: true,
+                        popup: false,
+                        trigger: { player: "useCard1" },
+                        filter(event) {
+                            return event.card?.name === "sha" &&
+                                (event.card.storage?.diy_miaojian ||
+                                    event.skill === "diy_miaojian_backup" ||
+                                    event.getParent()?.skill === "diy_miaojian_backup");
+                        },
+                        content(event, trigger, player) {
+                            if (trigger.addCount !== false) {
+                                trigger.addCount = false;
+                                const stat = player.getStat("card");
+                                if (stat?.sha) stat.sha--;
+                            }
+                        },
+                    },
+                },
+                ai: { order: 7, result: { player: 1 } },
+            },
+            "diy_lianhua": {
+                audio: "shhlianhua",
+                trigger: { target: "useCardToTargeted" },
+                forced: true,
+                locked: false,
+                mark: true,
+                marktext: "莲",
+                filter(event, player) {
+                    return event.card?.name === "sha" && event.player !== player;
+                },
+                intro: { content(storage, player) {
+                    return "已升级" + player.countMark("diy_lianhua") + "/2次；每次触发摸" + (1 + 2 * player.countMark("diy_lianhua")) + "张牌";
+                } },
+                async content(event, trigger, player) {
+                    await player.draw(1 + 2 * player.countMark("diy_lianhua"));
+                    if (!trigger.player?.isIn()) {
+                        trigger.getParent().excluded.add(player);
+                        return;
+                    }
+                    const eff = get.effect(player, trigger.card, trigger.player, trigger.player);
+                    const result = await trigger.player.chooseToDiscard(
+                        "he", "弃置一张牌，否则" + get.translation(trigger.card) + "对" + get.translation(player) + "无效"
+                    ).set("ai", card => get.event().eff > 0 ? 10 - get.value(card) : 0)
+                     .set("eff", eff).forResult();
+                    if (!result.bool) trigger.getParent().excluded.add(player);
+                },
+                ai: { effect: { target_use(card, player, target, current) {
+                    if (card.name === "sha" && current < 0) return 0.7;
+                } } },
+            },
             "地法": {
                 usable: 1,
                 group: "地法_reset",
@@ -374,6 +541,12 @@ function installSoloDoubleCharacter() {
             },
         },
         translate: {
+            "diy_chongxu": "冲虚",
+            "diy_chongxu_info": "出牌阶段限一次，你获得5分，然后可以消耗3分升级【妙剑】或【莲华】（各最多升级两次），或消耗2分摸一张牌（可重复）。未使用的分数不保留。",
+            "diy_miaojian": "妙剑",
+            "diy_miaojian_info": "出牌阶段限X次（X为1+升级次数），你可以视为使用一张刺【杀】或【无中生有】。以此法使用刺【杀】不计入使用【杀】的次数。",
+            "diy_lianhua": "莲华",
+            "diy_lianhua_info": "当你成为其他角色使用【杀】的目标时，你摸X张牌（X为1+升级次数×2）。除非使用者弃置一张牌，否则取消此【杀】对你的效果。",
             "地法": "地法",
             "地法_info": "每回合限一次。当你于回合内得到红色牌后，你可以弃置其中一张。然后你选择一个锦囊牌的牌名，并从牌堆/弃牌堆中获得一张此牌名的牌。当你造成雷电伤害后，此技能视为未发动过。",
             "惊蛰": "惊蛰",
