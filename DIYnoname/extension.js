@@ -172,22 +172,21 @@ function installSoloDoubleCharacter() {
                 },
                 prompt(event, player) {
                     const num = player.countMark("dchuiling");
-                    return player.hasSkill("diy_dctaji") && player.hasSkill("dcqinghuang")
-                        ? "移去所有“灵”并摸" + num + "张牌（保留【汇灵】）"
-                        : "移去所有“灵”，增加" + num + "点体力上限，然后获得【踏寂】和【青荒】（保留【汇灵】）";
+                    const bonus = player.hasSkill("diy_dctaji") && player.hasSkill("dcqinghuang")
+                        ? "摸" + num + "张牌"
+                        : "获得【踏寂】和【青荒】";
+                    return "移去所有“灵”，增加" + num + "点体力上限，然后" + bonus + "（保留【汇灵】）";
                 },
                 async content(event, trigger, player) {
                     const num = player.countMark("dchuiling");
                     if (num < 4) return;
                     const hasBoth = player.hasSkill("diy_dctaji") && player.hasSkill("dcqinghuang");
                     player.removeMark("dchuiling", num);
+                    await player.gainMaxHp(num);
                     if (hasBoth) {
                         await player.draw(num);
                     } else {
-                        await player.gainMaxHp(num);
-                        const missing = [];
-                        if (!player.hasSkill("diy_dctaji")) missing.push("diy_dctaji");
-                        if (!player.hasSkill("dcqinghuang")) missing.push("dcqinghuang");
+                        const missing = ["diy_dctaji", "dcqinghuang"].filter(skill => !player.hasSkill(skill));
                         if (missing.length) await player.addSkills(missing);
                     }
                 },
@@ -646,7 +645,7 @@ function installSoloDoubleCharacter() {
         },
         translate: {
             "diy_dcchongxu": "冲虚",
-            "diy_dcchongxu_info": "出牌阶段限一次，若你的“灵”不少于4，你可以移去所有“灵”（X为移去的“灵”数），然后若你已有【踏寂】和【青荒】，你摸X张牌；否则你增加X点体力上限并获得【踏寂】和【青荒】。你不会因此失去【汇灵】。",
+            "diy_dcchongxu_info": "出牌阶段限一次，若你的“灵”不少于4，你可以移去所有“灵”（X为移去的“灵”数），增加X点体力上限，然后若你已有【踏寂】和【青荒】，你摸X张牌；否则你获得【踏寂】和【青荒】。你不会因此失去【汇灵】。",
             "diy_dctaji": "踏寂",
             "diy_dctaji_info": "当你失去手牌后，根据失去牌的原因：使用牌后，你可以弃置一名其他角色的一张牌；打出牌后，你摸一张牌；弃置牌后，你回复1点体力；其他原因，令你下次对其他角色造成的伤害+1。【青荒】的额外效果仍然生效。",
             "diy_chongxu": "冲虚",
