@@ -9,6 +9,7 @@ extension["DIYnoname"] = {
         "蔡琰.jpg",
         "玄德.jpg",
         "黄盖.jpg",
-        "张宁.jpg"
+        "张宁.jpg",
+        "孙寒华.jpg"
     ]
 };
